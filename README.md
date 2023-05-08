@@ -1,2 +1,3 @@
 # course-work-object-oriented-programming
-course work
+My first course work project with C++ and Qt.
+This is a small application for downloading presets from https://presetshare.com.
