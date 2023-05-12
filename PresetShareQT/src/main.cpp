@@ -4,13 +4,13 @@
 #include <QWindow>
 #include <Windows.h>
 int main(int argc, char *argv[]) {
-  FreeConsole();
+  //FreeConsole();
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling); // DPI support
   QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps); //HiDPI pixmaps
   qputenv("QT_SCALE_FACTOR", "1");
 
   QApplication app(argc, argv);
-
+  app.setWindowIcon(QIcon(":/Img/logo.png"));
   QPalette palette = qApp->palette();
   palette.setColor(QPalette::Window, QColor("#272b2e"));
   qApp->setPalette(palette);
@@ -22,6 +22,5 @@ int main(int argc, char *argv[]) {
 
   window.setWindowTitle("PresetShare");
   window.show();
-  //FreeConsole();
   return app.exec();
 }

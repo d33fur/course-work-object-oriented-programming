@@ -12,7 +12,7 @@
 #include <QFileDialog>
 #include <QPixmap>
 #include <QPainter>
-
+#include <fstream>
 Login::Login(QWidget *parent) : QWidget(parent) {
     LoginPage();
 
@@ -21,22 +21,22 @@ Login::Login(QWidget *parent) : QWidget(parent) {
 void Login::LoginPage() {
     QFont f("Montserrat", 10, QFont::Normal);
 
-    QPixmap logoPicture("C:\\Users\\korep\\CLionProjects\\PresetShareQT\\images\\logo.png");
+    QPixmap logoPicture(":/Img/logo.png");
     logoLabel = new QLabel(this);
     logoLabel->move(-120, 0);
     logoLabel->resize(1000, 1000);
     logoLabel->setPixmap(logoPicture);
     logoLabel->setVisible(true);
 
-    QPixmap logoText("C:\\Users\\korep\\CLionProjects\\PresetShareQT\\images\\PresetShareText.png");
+    QImage logoText(":/Img/PresetShareText.png");
     textPresetShare = new QLabel(this);
     textPresetShare->move(290, 90);
-    textPresetShare->setPixmap(logoText);
+    textPresetShare->setPixmap(QPixmap::fromImage(logoText));
     textPresetShare->setVisible(true);
 
     warnLoginText = new QLabel(this);
-    warnLoginText->move(300, 390);
-    warnLoginText->resize(200, 30);
+    warnLoginText->move(280, 390);
+    warnLoginText->resize(300, 30);
     warnLoginText->setVisible(true);
     warnLoginText->setFont(f);
 
@@ -70,6 +70,18 @@ void Login::LoginPage() {
     loginButton->setVisible(true);
     loginButton->setFont(f);
 
+    rememberMeText = new QLabel("Remember me", this);
+    rememberMeText->move(150, 330);
+    rememberMeText->resize(200, 30);
+    rememberMeText->setVisible(true);
+    rememberMeText->setFont(f);
+
+    rememberMeCheckBox = new QCheckBox(this);
+    rememberMeCheckBox->move(300, 330);
+    rememberMeCheckBox->resize(30, 30);
+    rememberMeCheckBox->setVisible(true);
+    rememberMeCheckBox->setFont(f);
+
     QPalette palette;
     palette.setColor(QPalette::Base, QColor("#1b1e20"));
     palette.setColor(QPalette::Text, Qt::white);
@@ -88,6 +100,18 @@ void Login::LoginPage() {
     loginButton->update();
 
     connect(loginButton, &QPushButton::clicked, this, &Login::Authorization);
+
+    std::ifstream inputStream("temp.txt");
+    if (!inputStream)
+        qDebug() << "Can't open user settings file!";
+    else {
+        std::string line;
+        getline(inputStream, line);
+        loginLineEdit->setText(QString::fromStdString(line));
+        getline(inputStream, line);
+        passwordLineEdit->setText(QString::fromStdString(line));
+        loginButton->click();
+    }
 }
 
 void Login::Authorization() {
@@ -98,29 +122,35 @@ void Login::Authorization() {
     request.setRawHeader("Authorization", tokenByte);
     request.setUrl(QUrl("https://presetshare.com/app/check"));
 
-    //qDebug() << QSslSocket::supportsSsl() << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryVersionString();
+    qDebug() << QSslSocket::supportsSsl() << QSslSocket::sslLibraryBuildVersionString() << QSslSocket::sslLibraryVersionString();
     managerAuthorization->get(request);
-
+    if(rememberMeCheckBox->checkState()) {
+        std::ofstream outputStream;
+        outputStream.open("temp.txt");
+        outputStream << loginLineEdit->text().toStdString() << std::endl;
+        outputStream << passwordLineEdit->text().toStdString() << std::endl;
+        outputStream.close();
+    }
     connect(managerAuthorization, &QNetworkAccessManager::finished, this, &Login::LoginResult);
 }
 
 void Login::LoginResult(QNetworkReply* reply) {
     if(reply->error()) {
         warnLoginText->setText("Wrong login or password/token");
-        //qDebug() << "ERROR";
-        //qDebug() << reply->errorString();
+        qDebug() << "ERROR";
+        qDebug() << reply->errorString();
     } else {
         QString strReply = (QString) reply->readAll();
         QJsonDocument jsonDoc = QJsonDocument::fromJson(strReply.toUtf8());
         QJsonObject jsonObj = jsonDoc.object();
-        //qDebug() << "Downloading user info is completed";
+        qDebug() << "Downloading user info is completed";
         if(jsonObj["username"].toString() == loginLineEdit->text()) {
             username = jsonObj["username"].toString();
             ChangeLayoutToApp();
-            //qDebug() << "LOGGED IN";
+            qDebug() << "LOGGED IN";
         } else {
             warnLoginText->setText("Wrong login or password/token");
-            //qDebug() << "NOT LOGGED IN";
+            qDebug() << "NOT LOGGED IN";
         }
     }
 }
@@ -137,9 +167,8 @@ void Login::ChangeLayoutToApp() {
     loginButton->setVisible(false);
     logoLabel->setVisible(false);
     textPresetShare->setVisible(false);
-
-
-
+    rememberMeText->setVisible(false);
+    rememberMeCheckBox->setVisible(false);
     QFont f("Montserrat", 10, QFont::Normal);
     QPalette palette;
     palette.setColor(QPalette::WindowText, Qt::white);
@@ -217,22 +246,32 @@ void Login::ChangeLayoutToApp() {
 
     logoutButton = new QPushButton("Logout", this);
     logoutButton->setMaximumSize(100, 30);
-    gridMyLayout->addWidget(logoutButton, 2, 0);
+    gridMyLayout->addWidget(logoutButton, 3, 0);
     logoutButton->setFont(f);
+
     pathComboBox = new QComboBox(this);
     pathComboBox->setMaximumSize(180, 30);
     gridMyLayout->addWidget(pathComboBox, 0, 0);
     pathComboBox->setFont(f);
+
     pathPushButton = new QPushButton(this);
     //pathPushButton->setMaximumSize(250, 30);
     gridMyLayout->addWidget(pathPushButton, 0, 1);
     pathPushButton->setFont(f);
+
     openExplorerCheckBox = new QCheckBox(this);
     gridMyLayout->addWidget(openExplorerCheckBox, 1, 1);
     openExplorerCheckBox->setFont(f);
+
     openExplorerLabel = new QLabel("Not open explorer every download?", this);
     gridMyLayout->addWidget(openExplorerLabel, 1, 0);
     openExplorerLabel->setFont(f);
+
+    saveSettingsButton = new QPushButton("Save settings", this);
+    gridMyLayout->addWidget(saveSettingsButton, 2, 0);
+    saveSettingsButton->setFont(f);
+
+
     presetsPageButtonsList.resize(4);
     presetsPageButtonsList[0] = new QPushButton("<<",this);
     presetsPageButtonsList[1] = new QPushButton("<",this);
@@ -309,6 +348,8 @@ void Login::ChangeLayoutToApp() {
 
     GetInstruments();
     this->setLayout(gridLayout);
+
+    connect(saveSettingsButton, &QPushButton::clicked, this, &Login::SaveUserSettings);
     connect(logoutButton, &QPushButton::clicked, this, &Login::Logout);
 }
 
@@ -353,12 +394,45 @@ void Login::ChangePath() {
     ChangePathTextButton();
 }
 
+void Login::ReadUserSettings() {
+    std::ifstream inputStream("paths.txt");
+    if (!inputStream)
+        qDebug() << "Can't open user settings file!";
+    else {
+
+        int i = 0;
+        std::string line;
+        getline(inputStream, line);
+        if(line == "")
+            defaultPath = "C:/";
+        else
+            defaultPath = QString::fromStdString(line);
+        while (getline(inputStream, line)) {
+            pathsList[i] = QString::fromStdString(line);
+            i++;
+        }
+    }
+}
+
+void Login::SaveUserSettings() {
+    std::ofstream outputStream;
+    outputStream.open("paths.txt");
+    if(!outputStream.is_open())
+        qDebug() << "Can't write user settings file!";
+    else {
+        outputStream << defaultPath.toStdString() << std::endl;
+        for(int i = 0; i < jsonArrInstruments.size(); i++)
+            outputStream << pathsList[i].toStdString() << std::endl;
+        outputStream.close();
+    }
+}
+
 void Login::DownloadInstruments(QNetworkReply* reply) {
     if(reply->error()){
-        //qDebug() << "ERROR";
-        //qDebug() << reply->errorString();
+        qDebug() << "ERROR";
+        qDebug() << reply->errorString();
     } else {
-        //qDebug() << "Downloading instruments is completed";
+        qDebug() << "Downloading instruments is completed";
         QString strReply = (QString) reply->readAll();
         QJsonDocument jsonDoc = QJsonDocument::fromJson(strReply.toUtf8());
         jsonArrInstruments = jsonDoc.array();
@@ -367,6 +441,8 @@ void Login::DownloadInstruments(QNetworkReply* reply) {
         for (int i = 0; i < jsonArrInstruments.size(); i++) {
             pathComboBox->addItem(jsonArrInstruments[i].toObject()["name"].toString());
         }
+
+        ReadUserSettings();
     }
 }
 
@@ -379,6 +455,12 @@ void Login::Logout() {
     setFixedSize(QSize(800, 600));
     delete layout();
     qDeleteAll(this->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly));
+    remove("paths.txt");
+    remove("temp.txt");
+    defaultPath = "C:/";
+    for (int i = 0; i < jsonArrInstruments.size(); i++) {
+        pathsList[i] = "";
+    }
     LoginPage();
 }
 
@@ -400,8 +482,8 @@ void Login::ChangePresetsPage() {
     }
     currentPage = number;
     textPage->setText(QString::fromStdString(std::to_string(currentPage)));
-    //qDebug() << "PAGE NUMBER: ";
-    //qDebug() << number;
+    qDebug() << "PAGE NUMBER: ";
+    qDebug() << number;
     ToPresets(number);
 }
 
@@ -421,13 +503,13 @@ void Login::ToPresets(int number) {
 
 void Login::GetPresetsList(QNetworkReply* reply) {
     if(reply->error()) {
-        //qDebug() << "ERROR";
-        //qDebug() << reply->errorString();
+        qDebug() << "ERROR";
+        qDebug() << reply->errorString();
     } else {
         QString strReply = (QString) reply->readAll();
         QJsonDocument jsonDoc = QJsonDocument::fromJson(strReply.toUtf8());
         jsonArr = jsonDoc.array();
-        //qDebug() << "Downloading list is completed";
+        qDebug() << "Downloading list is completed";
         lastPage = reply->rawHeader("X-Pagination-Page-Count").toInt();
         QJsonObject presetJson;
         containerForMy->setVisible(false);
@@ -485,8 +567,8 @@ void Login::DownloadPresetFile() {
 
 void Login::SavePresetFile(QNetworkReply *reply) {
     if(reply->error()){
-        //qDebug() << "ERROR";
-        //qDebug() << reply->errorString();
+        qDebug() << "ERROR";
+        qDebug() << reply->errorString();
     } else {
         std::string fileNameFromReply = reply->rawHeader("Content-Disposition").toStdString();
         std::string fileName = "";
@@ -511,7 +593,7 @@ void Login::SavePresetFile(QNetworkReply *reply) {
         if(file->open(QFile::WriteOnly)){
             file->write(reply->readAll());
             file->close();
-            //qDebug() << "Downloading file is completed";
+            qDebug() << "Downloading file is completed";
         }
     }
 }

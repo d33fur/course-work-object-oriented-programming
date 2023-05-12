@@ -40,6 +40,8 @@ private slots:
     void DownloadInstruments(QNetworkReply* reply);
     void ChangePath();
     void ChangePathTextButton();
+    void ReadUserSettings();
+    void SaveUserSettings();
 
 private:
     QRectF const screenSize = QApplication::desktop()->screenGeometry();
@@ -80,25 +82,28 @@ private:
     QLabel* textLogin;
     QLabel* textPassword;
     QLabel* warnLoginText;
+    QLabel* rememberMeText;
+    QCheckBox* rememberMeCheckBox;
     QLineEdit* loginLineEdit;
     QLineEdit*  passwordLineEdit;
-    QPushButton *loginButton;
+    QPushButton* loginButton;
 
-    QPushButton *logoutButton;
-    QComboBox *pathComboBox;
-    QPushButton *pathPushButton;
-    QCheckBox *openExplorerCheckBox;
+    QPushButton* logoutButton;
+    QComboBox* pathComboBox;
+    QPushButton* pathPushButton;
+    QCheckBox* openExplorerCheckBox;
     QLabel *openExplorerLabel;
+    QPushButton* saveSettingsButton;
 
-    QPushButton *mainButton;
-    QPushButton *presetsButton;
-    QPushButton *bundlesButton;
-    QPushButton *questButton;
-    QPushButton *trackButton;
-    QPushButton *communityButton;
-    QPushButton *myButton;
-    QSlider *volumeSlider;
-    QLineEdit *presetsSearch;
+    QPushButton* mainButton;
+    QPushButton* presetsButton;
+    QPushButton* bundlesButton;
+    QPushButton* questButton;
+    QPushButton* trackButton;
+    QPushButton* communityButton;
+    QPushButton* myButton;
+    QSlider* volumeSlider;
+    QLineEdit* presetsSearch;
     QPushButton *searchButton;
 
     QVector<QLabel*> presetsNamesList;
