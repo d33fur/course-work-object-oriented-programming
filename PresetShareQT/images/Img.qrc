@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>Img/logo.png</file>
-        <file>Img/PresetShareText.png</file>
-    </qresource>
-</RCC>
