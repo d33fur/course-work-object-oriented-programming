@@ -1,7 +1,7 @@
 #include "Frontend.h"
 #include <QApplication>
 #include <QWindow>
-#include <Windows.h>
+//#include <Windows.h>
 int main(int argc, char *argv[]) {
 
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
